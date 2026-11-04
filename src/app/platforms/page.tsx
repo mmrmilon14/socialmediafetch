@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PhaseBadge } from "@/components/PhaseBadge";
 import { Shell } from "@/components/Shell";
+import { getDetail } from "@/lib/details";
 import { categories, contentTypeLabels, platformHref, platformsIn, stats } from "@/lib/platforms";
 
 export const metadata: Metadata = {
@@ -26,14 +27,21 @@ export default function PlatformsPage() {
           <h2 className="font-bold text-[20px] mb-3">{c.name}</h2>
           <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] divide-y divide-[#edf2f6]">
             {platformsIn(c.slug).map((p) => (
-              <Link key={p.slug} href={platformHref(p)} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 px-5 py-3.5 hover:bg-[#fbfdff]">
-                <span className="font-semibold sm:w-36 shrink-0">{p.name}</span>
-                <span className="text-[14px] flex-1">{p.mainUse}</span>
-                <span className="hidden md:block text-[12px] text-[#6b7d89] w-40 shrink-0">
-                  {p.supports.map((s) => contentTypeLabels[s]).join(", ")}
-                </span>
-                <span className="shrink-0"><PhaseBadge platform={p} /></span>
-              </Link>
+              <div key={p.slug} className="px-5 py-3.5">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                  <Link href={platformHref(p)} className="font-semibold sm:w-36 shrink-0 hover:text-brand">{p.name}</Link>
+                  <span className="text-[14px] flex-1">{p.mainUse}</span>
+                  <span className="hidden md:block text-[12px] text-[#6b7d89] w-40 shrink-0">
+                    {p.supports.map((s) => contentTypeLabels[s]).join(", ")}
+                  </span>
+                  <span className="shrink-0"><PhaseBadge platform={p} /></span>
+                </div>
+                <div className="mt-1.5 sm:pl-40 flex flex-wrap gap-x-3 gap-y-1 text-[13px]">
+                  {getDetail(p.slug).tools.map((t) => (
+                    <Link key={t.slug} href={`/${t.slug}`} className="text-brand hover:underline">{t.name}</Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </section>

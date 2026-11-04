@@ -3,7 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { detectPlatform, platformHref, platforms } from "@/lib/platforms";
+import { allTools, kindIcon } from "@/lib/details";
+import { detectPlatform, getPlatform, platformHref, platforms } from "@/lib/platforms";
+import type { IconName } from "./Icon";
+
+type Entry = { href: string; name: string; sub: string; icon: IconName; text: string };
+
+const entries: Entry[] = [
+  ...platforms.map((p) => ({ href: platformHref(p), name: `${p.name} Downloader`, sub: p.mainUse, icon: p.icon, text: `${p.name} ${p.slug} ${p.mainUse}`.toLowerCase() })),
+  ...allTools.map((t) => ({ href: `/${t.slug}`, name: t.name, sub: t.summary, icon: kindIcon[t.kind], text: `${t.name} ${getPlatform(t.platform)?.name} ${t.summary}`.toLowerCase() })),
+];
 import { Icon } from "./Icon";
 
 export function Search({ autoFocus = false, onNavigate }: { autoFocus?: boolean; onNavigate?: () => void }) {
@@ -39,9 +48,8 @@ export function Search({ autoFocus = false, onNavigate }: { autoFocus?: boolean;
   const results = useMemo(() => {
     const term = q.trim().toLowerCase();
     if (!term || looksLikeUrl) return [];
-    return platforms
-      .filter((p) => p.name.toLowerCase().includes(term) || p.slug.includes(term) || p.mainUse.toLowerCase().includes(term))
-      .slice(0, 8);
+    const words = term.split(/\s+/);
+    return entries.filter((e) => words.every((w) => e.text.includes(w))).slice(0, 8);
   }, [q, looksLikeUrl]);
 
   const go = (href: string) => {
@@ -61,7 +69,7 @@ export function Search({ autoFocus = false, onNavigate }: { autoFocus?: boolean;
     if (!results.length) return;
     if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => (a + 1) % results.length); }
     if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => (a - 1 + results.length) % results.length); }
-    if (e.key === "Enter") { e.preventDefault(); go(platformHref(results[active])); }
+    if (e.key === "Enter") { e.preventDefault(); go(results[active].href); }
   };
 
   return (
@@ -96,8 +104,8 @@ export function Search({ autoFocus = false, onNavigate }: { autoFocus?: boolean;
           ) : results.length ? (
             results.map((p, i) => (
               <Link
-                key={p.slug}
-                href={platformHref(p)}
+                key={p.href}
+                href={p.href}
                 onClick={() => { setOpen(false); setQ(""); onNavigate?.(); }}
                 onMouseEnter={() => setActive(i)}
                 className={`flex items-center gap-3 px-4 py-2 text-sm ${i === active ? "bg-page" : ""}`}
@@ -106,8 +114,8 @@ export function Search({ autoFocus = false, onNavigate }: { autoFocus?: boolean;
                   <Icon name={p.icon} className="w-4 h-4 text-white" />
                 </span>
                 <span className="flex-1">
-                  <span className="font-medium">{p.name} Downloader</span>
-                  <span className="block text-xs text-[#6b7d89] truncate">{p.mainUse}</span>
+                  <span className="font-medium">{p.name}</span>
+                  <span className="block text-xs text-[#6b7d89] truncate">{p.sub}</span>
                 </span>
               </Link>
             ))
